@@ -11,10 +11,8 @@ env:
   DOCKER_FILE_PATH: Dockerfile.dev
 
 jobs:
-  runs-on: ubuntu-latest
   name: Build
-  build:
-    runs-on: ubuntu-latest
+  runs-on: ubuntu-latest
 
   steps:
   - name: Checkout code
