@@ -52,7 +52,7 @@ jobs:
     - name: Generate image repository path
       run: |
         echo IMAGE_REPOSITORY=$(echo imrehan/reactcompleteguide | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
-        echo ${{ env.IMAGE_REPOSITORY }}
+        echo $IMAGE_REPOSITORY
     
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v2
