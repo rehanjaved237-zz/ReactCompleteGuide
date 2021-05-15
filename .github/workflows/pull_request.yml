@@ -46,7 +46,6 @@ jobs:
         sha=${{ github.event.pull_request.head.sha }}
         tag="SNAPSHOT-PR-${{ github.event.pull_request.number }}-${sha:0:8}"
         echo "##[set-output name=GIT_TAG;]$(echo ${tag})"
-
     - name: Login to Registry
       uses: docker/login-action@v1
       with:
@@ -71,7 +70,6 @@ jobs:
           org.opencontainers.image.source=${{ github.event.repository.clone_url }}
           org.opencontainers.image.created=${{ steps.prep.outputs.created }}
           org.opencontainers.image.revision=${{ github.sha }}
-
     - name: Comment on PR
       uses: mshick/add-pr-comment@v1
       env:
