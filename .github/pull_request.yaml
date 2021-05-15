@@ -1,0 +1,83 @@
+name: Pull Request Workspace
+
+on:
+  pull_request:
+    branches: [master]
+
+env:
+  NODE_VERSION: 12.x
+  DOCKER_FILE_PATH: Dockerfile
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+  steps:
+  - name: Checkout code
+    uses: actions/checkout@v2
+
+  - name: Setup Node.js ${{}}
+    uses: actions/setup-node@v1
+    with:
+      node-version: ${{ env.NODE_VERSION }}
+
+  - name: Install dependencies
+    run: npm Install
+
+  - name: Lint
+    run: npm run lint
+
+  - name: Set up QEMU
+    uses: docker/setup-qemu-action@v1
+
+  - name: Set up Docker Buildx
+    uses: docker/setup-buildx-action@v1
+
+  - name: Generate Tag
+    id: generate_tag
+    run: |
+      sha=${{ github.event.pull_request.head.sha }}
+      tag="SNAPSHOT-PR-${{ github.event.pull_request.number }}-${sha:0:8}"
+      echo "##[set-output name=GIT_TAG;]$(echo ${tag})"
+
+  - name: Login to Registry
+    uses: docker/login-action@v1
+    with:
+      username: ${{ secrets.DOCKERHUB_USERNAME }}
+      password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+  - name: Generate image repository path
+    run: |
+      echo IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+  
+  - name: Build and Push Docker Image
+    uses: docker/build-push-action@v2
+    with:
+      context: .
+      file: ${{ env.DOCKER_FILE_PATH  }}
+      pull: true
+      push: true
+      cache-to: type=inline
+      tags: |
+        ${{ env.IMAGE_REPOSITORY }}:${{ steps.generate_tag.outputs.GIT_TAG }}
+      labels: |
+        org.opencontainers.image.source=${{ github.event.repository.clone_url }}
+        org.opencontainers.image.created=${{ steps.prep.outputs.created }}
+        org.opencontainers.image.revision=${{ github.sha }}
+
+  - name: Comment on PR
+    uses: mshick/add-pr-comment@v1
+    env:
+      GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+    with:
+      message: '@${{ github.actor }} Image is available for testing. `docker pull ${{ github.repository }}:${{ steps.generate_tag.outputs.GIT_TAG }}`'
+      allow-repeats: false
+
+  - name: Notify Failure
+    if: failure()
+    uses: mshick/add-pr-comment@v1
+    env:
+      GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+    with:
+      message: '@${{ github.actor }} Yikes! You better fix it before anyone else finds out! [Build](https://github.com/${{ github.repository }}/commit/${{ github.event.pull_request.head.sha }}/checks) has Failed!'
+      allow-repeats: false
