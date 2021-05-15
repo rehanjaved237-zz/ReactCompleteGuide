@@ -1,4 +1,4 @@
-name: Pull Request
+name: Push
 
 on:
   push:
@@ -54,8 +54,9 @@ jobs:
     - name: Generate image repository path
       run: |
         echo IMAGE_REPOSITORY=$(echo imrehan/reactcompleteguide | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
-        echo $GITHUB_ENV
-    
+        echo $IMAGE_REPOSITORY
+
+
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v2
       with:
@@ -63,9 +64,10 @@ jobs:
         file: ${{ env.DOCKER_FILE_PATH  }}
         pull: true
         push: true
+        build-args: BUILD_PARAMETERS=${{ env.BUILD_PARAMETERS }}
         cache-to: type=inline
         tags: |
-          ${{ env.IMAGE_REPOSITORY }}:${{ steps.generate_tag.outputs.GIT_TAG }}
+          ${{ env.IMAGE_REPOSITORY }}:${{ steps.generate_tag.outputs.new_tag }}
         labels: |
           org.opencontainers.image.source=${{ github.event.repository.clone_url }}
           org.opencontainers.image.created=${{ steps.prep.outputs.created }}
