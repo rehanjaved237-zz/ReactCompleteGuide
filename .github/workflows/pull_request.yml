@@ -3,9 +3,6 @@ name: Pull Request
 on:
   pull_request:
     branches: 
-      - master
-  push:
-    branches:
       - main
 
 env:
@@ -31,10 +28,7 @@ jobs:
         node-version: ${{ env.NODE_VERSION }}
 
     - name: Install dependencies
-      run: npm Install
-
-    - name: Lint
-      run: npm run lint
+      run: npm install
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
@@ -57,7 +51,8 @@ jobs:
 
     - name: Generate image repository path
       run: |
-        echo IMAGE_REPOSITORY=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+        echo IMAGE_REPOSITORY=$(echo imrehan/reactcompleteguide | tr '[:upper:]' '[:lower:]') >> $GITHUB_ENV
+        echo $GITHUB_ENV
     
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v2
