@@ -73,22 +73,12 @@ jobs:
           org.opencontainers.image.created=${{ steps.prep.outputs.created }}
           org.opencontainers.image.revision=${{ github.sha }}
 
-    - name: Comment on PR
-      uses: mshick/add-pr-comment@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+    # Share artifact inside workflow
+    - name: Share artifact inside workflow
+      uses: actions/upload-artifact@v1
       with:
-        message: '@${{ github.actor }} Image is available for testing. `docker pull ${{ github.repository }}:${{ steps.generate_tag.outputs.GIT_TAG }}`'
-        allow-repeats: false
-
-    - name: Notify Failure
-      if: failure()
-      uses: mshick/add-pr-comment@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
-      with:
-        message: '@${{ github.actor }} Yikes! You better fix it before anyone else finds out! [Build](https://github.com/${{ github.repository }}/commit/${{ github.event.pull_request.head.sha }}/checks) has Failed!'
-        allow-repeats: false
+        name: react-github-actions-build
+        path: build
 
     - name: Notify Slack
       uses: 8398a7/action-slack@v3
@@ -128,3 +118,14 @@ jobs:
           artifacts: react-github-actions-release-build.zip
           body: https://react-github-actions.s3.amazonaws.com/index.html
           token: ${{ secrets.ACCESS_TOKEN }}
+
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        if: always() # Pick up events even if the job fails or is canceled.
+        with:
+          status: ${{ job.status }}
+          fields: repo,action,eventName,ref,workflow
+        env:
+          GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
